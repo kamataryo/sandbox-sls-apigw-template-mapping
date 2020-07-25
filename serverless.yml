@@ -1,0 +1,43 @@
+service: sandbox-apigw-template-mapping
+
+frameworkVersion: ">=1.75.1 <2.0.0"
+
+plugins:
+  - serverless-offline
+
+package:
+  exclude:
+    - .git/**
+    - src/**
+    - docs/**
+    - .*
+    - tsconfig.*
+    - package-lock.json
+    - yarn.lock
+    - README.md
+    - serverless.yml
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  memorySize: 128
+  region: ap-northeast-1
+  stage: dev
+
+functions:
+  status-code:
+    handler: dist/code.handler
+    events:
+      - http:
+          path: code/{code}/{type}/{subType}
+          method: get
+          integration: lambda
+          response:
+            headers:
+              Content-Type: integration.response.header.Content-Type
+            statusCodes:
+              204:
+                pattern: '.*"status" *: *204.*'
+                template: |
+                  #set ($obj = $util.parseJson($input.path('$.errorMessage')))
+                  { "message" : "$obj.message" }
